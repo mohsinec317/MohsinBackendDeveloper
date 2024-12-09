@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.models.database import get_db_session
+from app.models.database_init import get_db_session
 from app.models.trip_model import Trip
 from sqlalchemy import select
 from app.schemas.trip_schema import TripResponse

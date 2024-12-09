@@ -34,3 +34,4 @@ strawberry-graphql==0.253.1
 typing_extensions==4.12.2
 tzdata==2024.2
 uvicorn==0.22.0
+pytest==8.3.2

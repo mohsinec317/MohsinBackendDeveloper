@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Query
 from app.utilities.database_init import create_database_if_not_exists, create_table, load_csv_to_database
-from app.models.database import CsvPathRequest
+from app.models.database_init import CsvPathRequest
 
 router = APIRouter()
 

@@ -1,0 +1,75 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - qa
+      - test
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        environment: [production, qa, test]
+
+    env:
+      ENV_NAME: ${{ matrix.environment }}
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL_${{ matrix.environment | upper }} }}
+      
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Tests
+        run: |
+          # Conditionally run tests based on environment
+          if [[ "${{ matrix.environment }}" == "test" ]]; then
+            pytest --maxfail=1 --disable-warnings -q
+          fi
+
+      - name: Build Docker Image
+        run: |
+          docker build -t your-image-name:${{ matrix.environment }} .
+
+      - name: Push Docker Image
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/qa' || github.ref == 'refs/heads/test'
+        run: |
+          docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+          docker tag your-image-name:${{ matrix.environment }} your-dockerhub-username/your-image-name:${{ matrix.environment }}
+          docker push your-dockerhub-username/your-image-name:${{ matrix.environment }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/qa'
+
+    environment:
+      name: ${{ matrix.environment }}
+      url: https://your-deployment-url-for-${{ matrix.environment }}.com
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Deploy to Environment
+        run: |
+          echo "Deploying to ${{ matrix.environment }} environment"
+          
